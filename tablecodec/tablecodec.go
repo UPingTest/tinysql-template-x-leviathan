@@ -72,7 +72,35 @@ func EncodeRowKeyWithHandle(tableID int64, handle int64) kv.Key {
 // DecodeRecordKey decodes the key and gets the tableID, handle.
 func DecodeRecordKey(key kv.Key) (tableID int64, handle int64, err error) {
 	/* Your code here */
-	return
+
+	// 1. 检查tablePrefix
+	for i := range tablePrefix {
+		if i >= len(key) || tablePrefix[i] != key[i] {
+			return 0, 0, errors.New("wrong key1")
+		}
+	}
+
+	// 2. 解析出tableID
+	tableIDBegin := key[tablePrefixLength:]
+	recordPrefixSepBegin, tableID, err := codec.DecodeInt(tableIDBegin)
+	if err != nil {
+		return tableID, 0, err
+	}
+
+	// 3. 解析出recordPrefixSep
+	for i := range recordPrefixSep {
+		if recordPrefixSep[i] != recordPrefixSepBegin[i] {
+			return 0, 0, errors.New("wrong key2")
+		}
+	}
+	rowIDBegin := recordPrefixSepBegin[recordPrefixSepLength:]
+
+	// 4. 解析出rowID（handle）
+	rowIDBegin, handle, err = codec.DecodeInt(rowIDBegin)
+	if err != nil {
+		return tableID, handle, err
+	}
+	return tableID, handle, nil
 }
 
 // appendTableIndexPrefix appends table index prefix  "t[tableID]_i".
@@ -95,7 +123,39 @@ func EncodeIndexSeekKey(tableID int64, idxID int64, encodedValue []byte) kv.Key 
 // DecodeIndexKeyPrefix decodes the key and gets the tableID, indexID, indexValues.
 func DecodeIndexKeyPrefix(key kv.Key) (tableID int64, indexID int64, indexValues []byte, err error) {
 	/* Your code here */
+
+	// 1. 检查tablePrefix
+	for i := range tablePrefix {
+		if i >= len(key) || tablePrefix[i] != key[i] {
+			return 0, 0, nil, errors.New("wrong key 1")
+		}
+	}
+	tableIDBegin := key[tablePrefixLength:]
+
+	// 2. 解析tableID
+	indexPrefixSepBegin, tableID, err := codec.DecodeInt(tableIDBegin)
+	if err != nil {
+		return 0, 0, nil, err
+	}
+
+	// 3. 检查indexPrefixSep
+	for i := range indexPrefixSep {
+		if i >= len(indexPrefixSepBegin) || indexPrefixSep[i] != indexPrefixSepBegin[i] {
+			return 0, 0, nil, errors.New("wrong key 2")
+		}
+	}
+	indexIDBegin := indexPrefixSepBegin[len(indexPrefixSep):]
+
+	// 4. 解析indexID
+	indexValues, indexID, err = codec.DecodeInt(indexIDBegin)
+	if err != nil {
+		return 0, 0, nil, err
+	}
+
+	// 5. 解析indexValues
+	// 剩下的就是indexValues
 	return tableID, indexID, indexValues, nil
+
 }
 
 // DecodeIndexKey decodes the key and gets the tableID, indexID, indexValues.
