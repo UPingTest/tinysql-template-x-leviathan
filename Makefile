@@ -70,9 +70,9 @@ check: parser fmt errcheck lint tidy testSuite check-static vet
 # These need to be fixed before they can be ran regularly
 check-fail: goword check-slow
 
-fmt:
-	@echo "gofmt (simplify)"
-	@gofmt -s -l -w $(FILES) 2>&1 | $(FAIL_ON_STDOUT)
+# fmt:
+	# @echo "gofmt (simplify)"
+	# @gofmt -s -l -w $(FILES) 2>&1 | $(FAIL_ON_STDOUT)
 
 goword:tools/bin/goword
 	tools/bin/goword $(FILES) 2>&1 | $(FAIL_ON_STDOUT)
